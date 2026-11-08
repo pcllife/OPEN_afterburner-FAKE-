@@ -1,0 +1,12 @@
+/*
+!/.gitignore
+!/README.md
+!/Cargo.toml
+!/Cargo.lock
+!/src/
+/src/*
+!/src/*.rs
+!/scripts/
+/scripts/*
+!/scripts/*.py
+!/scripts/req.txt

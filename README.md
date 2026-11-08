@@ -1,3 +1,100 @@
+# abx
+
+small afterburner research repo. mostly windows, python and rust. the names are short on purpose. `abx` is the rust executable.
+
+this is our research code, not msi afterburner and not an msi project. no msi source, sdk files, binaries, drivers, extracted code or disassembly dumps are shipped here. to avoid redistributing msi's copyrighted material, download afterburner yourself from msi's official site.
+
+local files stay put. `.gitignore` only controls what gets committed and pushed. `afterb/`, `tools/`, `samples/`, `analysis/`, `target/` and ide files are excluded, not deleted. new file types need an explicit allowlist entry.
+
+## quick start
+
+use rust with edition 2024 support and python 3.12. the live parts need windows. no vendor download is needed for the synthetic parser tests.
+
+```powershell
+python -m pip install -r scripts/req.txt
+cargo build
+cargo test
+python -m unittest discover -s scripts -p "t_*.py"
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+```
+
+vendor-dependent tests skip when their local fixtures are missing. run `cargo build` first if you want the offline cli tests too. the tests use synthetic data or mocks, not live clock writes.
+
+```powershell
+.\target\debug\abx.exe --help
+.\target\debug\abx.exe parse sample.bin --gpu-only
+.\target\debug\abx.exe oc-info --from control.bin
+python scripts/pc.py --help
+python scripts/pp.py --help
+```
+
+those `.bin` paths are your saved snapshots, not files supplied by this repo. `monitor`, `nvapi`, `snapshot` and `oc-snapshot` read live data. the rust tool has no tuning commands and never starts afterburner for you.
+
+## files
+
+`src/m.rs` is the cli. `hm.rs` reads monitoring snapshots, `cm.rs` reads control snapshots, `shm.rs` opens read-only shared memory. `nv.rs` reads nvapi telemetry and `ni.rs` holds its getter ids.
+
+`inv.py`, `tr.py`, `tm.py`, `to.py` and `tc.py` handle inventory and static traces. `vx.py` and `v3.py` inspect the vendor dispatch paths. `so.py`, `sc.py` and `ct.py` summarize the findings and call contract.
+
+`pc.py` is the offline clock contract. `pp.py` decodes pstate packets. `cap.py` captures getter data. `ob.py` keeps the old locked experiment; `oc.py` is the separately gated short-trial runner.
+
+`gl.py` holds the opengl support. `rg.py`, `rt.py` and `rf.py` are geometry, texture and fragment workloads. `st.py` supervises the bounded render trial; `ss.py` summarizes its logs. `jio.py` handles shared json files.
+
+`cf.py`, `ns.py`, `nh.py`, `pe.py`, `s1.py`, `s2.py`, `z2.py` and `zs.py` are small binary-inspection helpers. `fh.py` fetches the header cache and `gi.py` generates read-only ids. `t_*.py` are tests; `req.txt` pins the two python packages.
+
+internal names are abbreviated. external api symbols, command-line options, json keys and binary field layouts stay compatible. old experiment logs keep their original names.
+
+## local setup
+
+put your own afterburner copy under `afterb/MSI Afterburner/`. static tracing uses radare2 under `tools/r2/radare2-5.9.8-w64/bin/`; `tr.py` also accepts `--r2`. samples go in `samples/`, generated reports in `analysis/`.
+
+public nvapi headers are a separate local dependency under `tools/nvapi-headers/`. `fh.py` maintains that cache. they are not bundled here either. historical static traces are tied to the sampled binaries, not every afterburner version.
+
+## abi
+
+comments like `_abi_` point back here. field order, widths, signedness and calling conventions matter more than names. the rust nvapi surface only contains lifecycle calls, enumeration and getters. a missing value is not a zero reading.
+
+`ni.rs` comes from nvidia/nvapi commit `70d337db9186e968eab622f7e786de7e437faf3d`. the `nvapi_interface.h` sha256 is `d279f81e7f92f2743bfea2ec7ada693001805e13645eb1c6f2af44ef9c342834`. `gi.py` checks the cached hash before regenerating the ids.
+
+## guard
+
+`_guard_` means the live boundary or a preflight check. rust loads nvapi from the windows system directory and only maps shared memory read-only. the python trial runners keep their identity, temperature, duration and authorization checks.
+
+these live scripts are tied to the original gtx 950 experiment. they are not a general overclocking tool. unlocking voltage in afterburner does not enable any voltage writes in this project. the naming cleanup does not run another hardware trial.
+
+## restore
+
+`_restore_` marks recovery and supervision. the experiment records the starting offsets, arms a separate supervisor and checks readback after restoring. a successful call alone does not prove the gpu changed or recovered.
+
+## gl
+
+`_gl_` marks the rendering pieces. the earlier five-minute run used three 100-second phases at 720p, capped at 60 fps, with a +13 mhz core offset. it was not a full-load stability test.
+
+that run logged 17,982 frames and 300 image checks. peak sampled temperature was 28 c; gpu utilization averaged 24.3% and peaked at 40%. original offsets were restored and independently checked. memory, voltage, power, fan and temperature limits were not changed.
+
+the original reports remain local in `analysis/phase10/`. renamed code is checked offline; those old results are not a new live validation of this refactor.
+
+## io
+
+`_io_` marks snapshots, logs and shared json. snapshots are best-effort, not atomic. output files should not silently overwrite an existing capture. shared json replacement has bounded retries for windows sharing conflicts.
+
+## pe
+
+`_pe_` marks static binary inspection. addresses and selectors describe the sampled version. following an afterburner call into nvapi is not the same as reconstructing the kernel driver's register path. the nvidia path is not just a generic rtcore write.
+
+## test
+
+`_test_` marks synthetic, mock and local-artifact checks. packet bounds, signed offsets, read-only loading, rejected inputs and recovery paths stay covered. the complete local suite has 157 python tests and 30 rust tests.
+
+## license
+
+this repo keeps the gplv3 license from its existing history. it covers this project's code, not msi or nvidia's material. the original license text is kept verbatim below so this is still the only markdown document shipped.
+
+<details>
+<summary>original license text</summary>
+
+```text
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
@@ -672,3 +769,6 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
+```
+
+</details>
