@@ -1,10 +1,10 @@
 # abx
 
-small afterburner research repo. mostly windows, python and rust. the names are short on purpose. `abx` is the rust executable.
+small afterburner research repo. mostly windows, python and rust.  `abx` is the rust executable.
 
 this is our research code, not msi afterburner and not an msi project. no msi source, sdk files, binaries, drivers, extracted code or disassembly dumps are shipped here. to avoid redistributing msi's copyrighted material, download afterburner yourself from msi's official site.
 
-local files stay put. `.gitignore` only controls what gets committed and pushed. `afterb/`, `tools/`, `samples/`, `analysis/`, `target/` and ide files are excluded, not deleted. new file types need an explicit allowlist entry.
+
 
 ## quick start
 
